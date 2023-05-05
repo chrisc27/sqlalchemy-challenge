@@ -42,7 +42,10 @@ def home():
         f"Available Routes:<br/>"
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
-        f"/api/v1.0/tobs")
+        f"/api/v1.0/tobs<br/>"
+        f"/api/v1.0/(start_date)<br/>"
+        f"/api/v1.0/(start_date)/(end_date)<br/>"
+        f"Date format: YYYY-MM-DD")
 
 
 @app.route("/api/v1.0/precipitation")
@@ -116,6 +119,44 @@ def tobs():
         dict_temp[record.date] = record.tobs
     
     return jsonify(dict_temp)
+
+@app.route("/api/v1.0/<start>")
+def start_range(start):
+    """Return a JSON list of the minimum temperature, the average temperature, and the maximum temperature for a specified start range."""
+
+    # Create our session (link) from Python to the DB
+    session4 = Session(engine)
+
+    #Get min, average, and max temperatures from start date
+    start_range = session4.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).where(Measurement.date >= start).all()
+
+    #close session
+    session4.close()
+
+    # Store in dictionary
+    dict_start = {"Min": start_range[0][0], "Average": start_range[0][1], "Max": start_range[0][2]}
+
+    return jsonify(dict_start)
+
+
+@app.route("/api/v1.0/<start>/<end>")
+def startend_range(start, end):
+    """Return a JSON list of the minimum temperature, the average temperature, and the maximum temperature for a specified start-end range."""
+
+    # Create our session (link) from Python to the DB
+    session5 = Session(engine)
+
+    #Get min, average, and max temperatures from start-end date
+    end_range = session5.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).where(Measurement.date >= start).where(Measurement.date <= end).all()
+
+    #close session
+    session5.close()
+
+    # Store in dictionary
+    dict_end = {"Min": end_range[0][0], "Average": end_range[0][1], "Max": end_range[0][2]}
+
+    return jsonify(dict_end)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
